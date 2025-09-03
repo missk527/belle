@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>English Helper</title>
+<style>
+:root{
+  --main-bg:#fff0f8; --panel-1:#ffd6f5; --panel-2:#f5ccff;
+  --accent:#ff7eb9; --accent-2:#ff65a3; --text:#4a004a;
+  --muted:#7a3f7a; --border:#ffb6e6; --shadow:0 6px 18px rgba(200,100,160,.18);
+  --radius:14px;
+}
+body{ background:var(--main-bg); color:var(--text);
+  font-family:"Comic Sans MS","Noto Sans","Arial",sans-serif;
+  line-height:1.6; padding-bottom:120px; }
+header{ background:linear-gradient(180deg,var(--panel-1),var(--panel-2));
+  border-bottom:2px dashed var(--border); box-shadow:var(--shadow);
+  padding:16px 20px; display:flex; justify-content:space-between; align-items:center; }
+h1{ color:var(--text); font-size:20px; margin:0; } h1::before{ content:"🌸"; margin-right:6px; }
+.btn{ padding:10px 16px; border:2px solid var(--border); border-radius:22px;
+  background:#fff5fb; color:var(--text); box-shadow:var(--shadow); font-weight:700; cursor:pointer; }
+.btn.primary{ background:var(--accent); border-color:var(--accent-2); color:#fff; }
+textarea{ width:100%; height:220px; border-radius:16px; border:2px solid var(--border);
+  background:#fff9fd; color:var(--text); font-size:15px; padding:10px; }
+#status{ border:2px dashed var(--border); border-radius:var(--radius);
+  background:#ffe6f7; color:var(--text); box-shadow:var(--shadow); padding:14px; margin:18px; }
+.grid{ display:grid; gap:16px; margin:18px; } @media (min-width:800px){ .grid{ grid-template-columns:1fr 1fr; } }
+.panel{ background:#fff0fa; border:2px solid var(--border); border-radius:var(--radius);
+  padding:16px; box-shadow:var(--shadow); }
+label{ display:block; margin-bottom:8px; font-weight:900; color:var(--muted); }
+
+/* Highlights */
+.hl-del{ background:#ffdce0; text-decoration:line-through; border-radius:6px; padding:0 4px; }
+.hl-ins{ background:#e0ffd6; border-bottom:2px solid #2d8a2d; border-radius:6px; padding:0 4px; }
+.small{ font-size:13px; color:#7a3f7a; }
+
+/* Review card */
+#review{ display:none; margin:18px; }
+#review .card{ background:#fff9fd; border:2px solid var(--border); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); }
+.suggest{ margin:8px 0 0 22px; } .suggest li{ margin:10px 0; }
+.chip-old{ background:#ffdce0; border-radius:6px; padding:0 6px; }
+.chip-new{ background:#e0ffd6; border-radius:6px; padding:0 6px; border-bottom:2px solid #2d8a2d; }
+
+/* Footer sticker */
+body::after{
+  content:" 🌸🐰💜 English is fun! ";
+  position:fixed; right:10px; bottom:8px;
+  background:#fff; border:2px solid var(--border); border-radius:14px;
+  padding:8px 10px; box-shadow:var(--shadow);
+  font-weight:800; color:var(--text); transform:scale(.9); pointer-events:none;
+}
+</style>
+</head>
+<body>
+<header><h1>English Helper</h1></header>
+
+<div class="grid">
+  <div class="panel">
+    <label>English Word / Sentence</label>
+    <textarea id="inputEn" placeholder="Type an English word or sentence"></textarea>
+    <div class="row" style="margin-top:8px; display:flex; gap:10px;">
+      <button id="btnDefine" class="btn primary">Define</button>
+      <button id="btnClearIn" class="btn">Clear</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <label>Definition / Grammar Check</label>
+    <textarea id="output" placeholder="Definition will appear here. You can also type English and press Grammar."></textarea>
+    <div class="row" style="margin-top:8px; display:flex; gap:10px;">
+      <button id="btnCheck" class="btn primary">Grammar</button>
+      <button id="btnClearOut" class="btn">Clear</button>
+    </div>
+  </div>
+</div>
+
+<div id="status">✨ Enter an English word/sentence → press “Define” for meaning, then “Grammar” to improve.</div>
+
+<div id="review">
+  <div class="card">
+    <strong>🛠 Corrections</strong>
+    <p class="small">Below shows “Original (red deleted)” and “Corrected (green added)”.</p>
+    <div><strong>Original:</strong> <span id="origHL"></span></div>
+    <div><strong>Corrected:</strong> <span id="corrHL"></span></div>
+    <hr style="border:none;border-top:1px dashed #e6c55b;margin:12px 0;">
+    <div><strong>📝 Suggestions</strong><ol id="suggestList" class="suggest"></ol></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const ui = {
+    inputEn: document.getElementById('inputEn'),
+    output: document.getElementById('output'),
+    define: document.getElementById('btnDefine'),
+    check: document.getElementById('btnCheck'),
+    clearIn: document.getElementById('btnClearIn'),
+    clearOut: document.getElementById('btnClearOut'),
+    status: document.getElementById('status'),
+    review: document.getElementById('review'),
+    origHL: document.getElementById('origHL'),
+    corrHL: document.getElementById('corrHL'),
+    suggestList: document.getElementById('suggestList')
+  };
+  function setStatus(t){ ui.status.textContent=t; }
+  const esc = t => t.replace(/[&<>"']/g, c => ({'&':"&amp;",'<':"&lt;",'>':"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  function diffHL(oldText, newText){
+    if(oldText===newText) return {origHL:esc(oldText), corrHL:esc(newText)};
+    let s=0,e1=oldText.length-1,e2=newText.length-1;
+    while(s<=e1&&s<=e2&&oldText[s]===newText[s]) s++;
+    while(e1>=s&&e2>=s&&oldText[e1]===newText[e2]){e1--;e2--;}
+    return {
+      origHL: esc(oldText.slice(0,s))+'<span class="hl-del">'+esc(oldText.slice(s,e1+1))+'</span>'+esc(oldText.slice(e1+1)),
+      corrHL: esc(newText.slice(0,s))+'<span class="hl-ins">'+esc(newText.slice(s,e2+1))+'</span>'+esc(newText.slice(e2+1))
+    };
+  }
+  function renderSuggestions(changes){
+    ui.suggestList.innerHTML="";
+    changes.forEach(ch=>{
+      const li=document.createElement('li');
+      li.innerHTML = `<strong>${esc(ch.title)}</strong>: ${esc(ch.msg||"")}<br>
+        <span class="chip-old">${esc(ch.from||"")}</span> → <span class="chip-new">${esc(ch.to||"")}</span>`;
+      ui.suggestList.appendChild(li);
+    });
+  }
+
+  /* ===== Dictionary (free) ===== */
+  async function fetchDefinition(word){
+    try{
+      const r=await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(word));
+      if(!r.ok) throw new Error("Not found");
+      const j=await r.json();
+      return j[0]?.meanings?.map(m=>`(${m.partOfSpeech}) `+m.definitions[0].definition).join("\n") || "No definition found.";
+    }catch(e){ return "⚠️ Definition not found."; }
+  }
+
+  /* ===== Grammar: LanguageTool + Local Rules (from kidtran, extended) ===== */
+
+  /* Irregular verbs */
+  const IRR = {"am":["was","been"],"is":["was","been"],"are":["were","been"],
+    "do":["did","done"],"does":["did","done"],"go":["went","gone"],
+    "come":["came","come"],"eat":["ate","eaten"],"see":["saw","seen"],
+    "take":["took","taken"],"make":["made","made"],"have":["had","had"],"has":["had","had"],
+    "get":["got","gotten"],"give":["gave","given"],"write":["wrote","written"],
+    "read":["read","read"],"run":["ran","run"],"sleep":["slept","slept"],
+    "feel":["felt","felt"],"leave":["left","left"],"meet":["met","met"],
+    "pay":["paid","paid"],"put":["put","put"],"say":["said","said"],
+    "buy":["bought","bought"],"bring":["brought","brought"],"think":["thought","thought"],
+    "teach":["taught","taught"],"begin":["began","begun"],"become":["became","become"],
+    "find":["found","found"],"hold":["held","held"],"keep":["kept","kept"],
+    "speak":["spoke","spoken"],"drink":["drank","drunk"],"drive":["drove","driven"],
+    "forget":["forgot","forgotten"],"forgive":["forgave","forgiven"],"grow":["grew","grown"],
+    "know":["knew","known"],"lose":["lost","lost"],"send":["sent","sent"],
+    "sit":["sat","sat"],"stand":["stood","stood"],"understand":["understood","understood"],
+    "win":["won","won"],"cut":["cut","cut"],"hit":["hit","hit"],"hurt":["hurt","hurt"],"let":["let","let"],"set":["set","set"],"cost":["cost","cost"]
+  };
+  const SPELL={
+    "becuase":"because","recieve":"receive","seperate":"separate","definately":"definitely",
+    "wierd":"weird","adress":"address","enviroment":"environment","tomatos":"tomatoes",
+    "alot":"a lot","occured":"occurred","wich":"which","thier":"their","beleive":"believe",
+    "freind":"friend","studing":"studying","untill":"until","sory":"sorry","consder":"consider",
+    "mum":"mom"
+  };
+  const SINGULARIZE={"boys":"boy","girls":"girl","students":"student","teachers":"teacher","friends":"friend","children":"child","people":"person","men":"man","women":"woman"};
+  function toPast(v){ if(IRR[v]) return IRR[v][0]; if(/[^aeiou]y$/.test(v)) return v.slice(0,-1)+"ied"; if(v.endsWith("e")) return v+"d"; return v+"ed"; }
+  function toPart(v){ if(IRR[v]) return IRR[v][1]||IRR[v][0]; if(/[^aeiou]y$/.test(v)) return v.slice(0,-1)+"ied"; if(v.endsWith("e")) return v+"d"; return v+"ed"; }
+  function matchCase(t,s){ if(!s) return t; if(s===s.toUpperCase())return t.toUpperCase(); if(s[0]===s[0].toUpperCase())return t[0].toUpperCase()+t.slice(1); return t; }
+
+  async function applyLanguageToolOnceDetailed(input){
+    try{
+      const p=new URLSearchParams();
+      p.append("text", input);
+      p.append("language","en-US");
+      p.append("enabledCategories","GRAMMAR,CONFUSED_WORDS,TYPOGRAPHY,PUNCTUATION,STYLE");
+      const r=await fetch("https://api.languagetool.org/v2/check",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:p});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const j=await r.json();
+      const ms=(j.matches||[]).filter(m=>m.replacements&&m.replacements[0]).sort((a,b)=>b.offset-a.offset);
+      let out=input, changes=[];
+      for(const m of ms){
+        const from=out.slice(m.offset, m.offset+m.length);
+        const to=m.replacements[0].value;
+        out=out.slice(0,m.offset)+to+out.slice(m.offset+m.length);
+        changes.push({ title:"LanguageTool", from, to, msg:m.message||"" });
+      }
+      return { text:out, count:changes.length, changes };
+    }catch(e){ return { text:input, count:0, changes:[] }; }
+  }
+
+  function localFixOnce(src){
+    let s=src, count=0; const changes=[];
+    const add=(title,from,to,msg="")=>{ if(from!==to){ count++; changes.push({title,from,to,msg}); } };
+
+    /* Capitalization + spelling */
+    s = s.replace(/(^|[.!?]\s+)([a-z])/g,(m,pre,ch)=>{ add("Capitalization",ch,ch.toUpperCase()); return pre+ch.toUpperCase(); });
+    s = s.replace(/\b([A-Za-z']+)\b/g,(m,w)=>{const low=w.toLowerCase();if(SPELL[low]){const to=matchCase(SPELL[low],w);add("Spelling",w,to);return to;}return w;});
+
+    /* have/has agreement */
+    s = s.replace(/\bI\s+has\b/gi,()=>{ add("Have/has","I has","I have"); return "I have"; });
+    s = s.replace(/\b(you|we|they)\s+has\b/gi,(m,p)=>{ const to=p+" have"; add("Have/has",m,to); return to; });
+    s = s.replace(/\b(he|she|it)\s+have\b/gi,(m,p)=>{ const to=p+" has"; add("Have/has",m,to); return to; });
+
+    /* Predicate number fixes (I am boys → I'm a boy; She is girls → She is a girl) */
+    s = s.replace(/\bI\s+am\s+(boys|girls|students|teachers|friends|children|people|men|women)\b/gi,(m,pl)=>{ const to=`I'm a ${SINGULARIZE[pl.toLowerCase()]||"person"}`; add("Predicate number",m,to); return to; });
+    s = s.replace(/\b(He|She|It)\s+is\s+([a-z]+)\b/gi, (m, subj, np) => {
+      const low = np.toLowerCase();
+      const head = SINGULARIZE[low] || (/(ses|xes|zes|ches|shes)$/.test(low) ? np : low.endsWith("s") ? low.slice(0,-1) : null);
+      if (!head) return m;
+      const art = /^[aeiou]/i.test(head) ? "an" : "a";
+      const rep = `${subj} is ${art} ${head}`;
+      add("Predicate number", m, rep, "Singular subject needs singular complement.");
+      return rep;
+    });
+
+    /* Obligation have/has to */
+    s = s.replace(/\b(have|has)\s+go\b/gi,(m,aux)=>{ const to=`${aux} to go`; add("Obligation",m,to); return to; });
+
+    /* Collocations: go shopping / go to school; go home */
+    s = s.replace(/\bgo\s+to\s+shopping\b/gi,()=>{ const to="go shopping"; add("Collocation","go to shopping",to); return to; });
+    s = s.replace(/\b(go|went|gone)\s+(school|work|class|church|library|park|store|market|hospital|office|airport|station|zoo|museum|cinema|theater|beach|farm)\b/gi,
+      (m,v,place)=>{ const to=`${v} to ${place}`; add("Preposition",m,to); return to; });
+    s = s.replace(/\b(go|went|gone)\s+to\s+home\b/gi,(m,v)=>{ const to=`${v} home`; add("Preposition",m,to); return to; });
+
+    /* Present perfect common mistakes */
+    const BAD={"goed":"gone","goned":"gone","went":"gone","ate":"eaten","saw":"seen","did":"done","writed":"written","speaked":"spoken","buyed":"bought","taked":"taken","getted":"gotten","goted":"gotten"};
+    s = s.replace(/\b(have|has)\s+([a-z]+)\b/gi,(m,aux,v)=>{
+      const low=v.toLowerCase();
+      if(BAD[low]){ const to=`${aux} ${BAD[low]}`; add("Present perfect",m,to); return to; }
+      for(const base in IRR){ const[v2,v3]=IRR[base]; if(low===v2){ const to=`${aux} ${v3||v2}`; add("Present perfect",m,to); return to; } }
+      return m;
+    });
+
+    /* Future markers without will/going to */
+    const futureMark=/\b(tomorrow|next\s+(week|month|year|mon(day)?|tue(sday)?|wed(nesday)?|thu(rsday)?|fri(day)?|sat(urday)?|sun(day)?)|soon|in\s+\d+\s+(minutes?|hours?|days?|weeks?|months?|years?))\b/i;
+    if(futureMark.test(s) && !/\b(will|going to)\b/i.test(s)){
+      s = s.replace(/^(Tomorrow|Next\b[^,]*|In\s+\d+\s+\w+|Soon)\s+([a-z]+)/i,(m,lead,verb)=>{ const to=`${lead} I will ${verb}`; add("Future",m,to); return to; });
+      s = s.replace(/\b(I|he|she|it|we|they|you)\s+([a-z]+)\b/gi,(m,subj,verb)=>{
+        if(/^(am|is|are|was|were|been|be|will|have|has|had|do|does|did|can|may|might|should|would|must|go|going)$/i.test(verb)) return m;
+        const to=`${subj} will ${verb}`; add("Future",m,to); return to;
+      });
+    }
+
+    /* Quantifiers pluralization + one/a singular */
+    (function(){
+      const IRR_PL = { child:"children", person:"people", man:"men", woman:"women", tooth:"teeth", foot:"feet", mouse:"mice" };
+      s = s.replace(/\b(\d+|two|three|four|five|six|seven|eight|nine|ten|many|several|a lot of)\s+([a-z]+)\b/gi,
+        (m, qty, noun) => {
+          if (/s$|children|people|men|women|teeth|feet|mice/i.test(noun)) return m;
+          const low = noun.toLowerCase();
+          const pl = IRR_PL[low] || (/(s|x|z|ch|sh)$/i.test(low) ? low + "es" :
+                      /[^aeiou]y$/i.test(low) ? low.slice(0,-1) + "ies" : low + "s");
+          const rep = `${qty} ${pl}`;
+          add("Plural after quantifier", m, rep);
+          return rep;
+        }
+      );
+      s = s.replace(/\b(one|a)\s+([a-z]+)s\b/gi, (m, one, noun) => {
+        const rep = `${one} ${noun}`;
+        add("Singular after one/a", m, rep);
+        return rep;
+      });
+    })();
+
+    /* Pronoun capitalization and case */
+    (function(){
+      s = s.replace(/\bi\b/g, (m) => { add("Capitalization","i","I"); return "I"; });
+      s = s.replace(/\b(with|to|for|from|at|of|about)\s+I\b/gi, (m, prep) => {
+        const rep = `${prep} me`;
+        add("Pronoun case", m, rep, "Use object case after a preposition.");
+        return rep;
+      });
+      s = s.replace(/\b(me)\s+and\s+([A-Z][a-z]+)\b/g, (m, me, name) => {
+        const rep = `${name} and I`;
+        add("Pronoun case", m, rep, "Use subject case in subject position and put the name first.");
+        return rep;
+      });
+      s = s.replace(/\b(i)\s+and\s+([A-Z][a-z]+)\b/g,(m,i,name)=>{ const to=`${name} and I`; add("Style",m,to); return to; });
+    })();
+
+    /* There is/are agreement */
+    (function(){
+      s = s.replace(/\bThere\s+is\s+(many|several|a lot of|[0-9]+)\b/gi, (m, qty) => {
+        const rep = `There are ${qty}`;
+        add("There is/are agreement", m, rep);
+        return rep;
+      });
+      s = s.replace(/\bThere\s+are\s+(a|an|one)\b/gi, (m, a1) => {
+        const rep = `There is ${a1}`;
+        add("There is/are agreement", m, rep);
+        return rep;
+      });
+    })();
+
+    /* Future time at sentence start */
+    (function(){
+      s = s.replace(
+        /^(Tomorrow|Next\s+\w+|In\s+\d+\s+\w+|Soon)\s+(?:(?:me\s+and\s+)?I\s+)?([a-z]+)\b/mi,
+        (m, lead, verb) => {
+          if (/^(will|am|is|are|go|going|can|may|might|should|would|must|have|has)$/i.test(verb)) return m;
+          const rep = `${lead} I will ${verb}`;
+          add("Future time + will", m, rep);
+          return rep;
+        }
+      );
+    })();
+
+    /* Present perfect markers -> have/has + V3 */
+    (function(){
+      const mark = /\b(already|just|yet|ever|never|since\b(?:\s+\d{4})?|for\s+\d+\s+(?:minute|hour|day|week|month|year)s?)\b/i;
+      if (mark.test(s)) {
+        s = s.replace(/\b(We|They|You|I)\s+([a-z]+)\b/gi, (m, subj, verb) => {
+          const v = verb.toLowerCase();
+          if (/^(have|has|am|is|are|was|were|did|do|does|will)$/i.test(v)) return m;
+          const v3 = IRR[v] ? (IRR[v][1] || IRR[v][0]) : toPart(v);
+          const rep = `${subj} have ${v3}`;
+          add("Present perfect marker", m, rep);
+          return rep;
+        });
+        s = s.replace(/\b(He|She|It)\s+([a-z]+)\b/gi, (m, subj, verb) => {
+          const v = verb.toLowerCase();
+          if (/^(have|has|am|is|are|was|were|did|do|does|will)$/i.test(v)) return m;
+          const v3 = IRR[v] ? (IRR[v][1] || IRR[v][0]) : toPart(v);
+          const rep = `${subj} has ${v3}`;
+          add("Present perfect marker", m, rep);
+          return rep;
+        });
+      }
+    })();
+
+    /* a/an safety */
+    (function(){
+      s = s.replace(/\ba\s+([aeiouAEIOU]\w+)/g, (m, w) => {
+        const rep = `an ${w}`;
+        add("a/an", m, rep);
+        return rep;
+      });
+      s = s.replace(/\ban\s+([^aeiouAEIOU\s]\w*)/g, (m, w) => {
+        const rep = `a ${w}`;
+        add("a/an", m, rep);
+        return rep;
+      });
+    })();
+
+    /* Time prepositions */
+    (function(){
+      const PREP_FIXES = [
+        [/\bin (Mon|Monday)\b/gi, "on Monday"],
+        [/\bin (Tue|Tuesday)\b/gi, "on Tuesday"],
+        [/\bin (Wed|Wednesday)\b/gi, "on Wednesday"],
+        [/\bin (Thu|Thursday)\b/gi, "on Thursday"],
+        [/\bin (Fri|Friday)\b/gi, "on Friday"],
+        [/\bin (Sat|Saturday)\b/gi, "on Saturday"],
+        [/\bin (Sun|Sunday)\b/gi, "on Sunday"],
+        [/\bat morning\b/gi, "in the morning"],
+        [/\bat afternoon\b/gi, "in the afternoon"],
+        [/\bin night\b/gi, "at night"]
+      ];
+      PREP_FIXES.forEach(([re, to]) => {
+        s = s.replace(re, (m) => { add("Preposition (time)", m, to); return to; });
+      });
+    })();
+
+    /* Past tense signals */
+    (function () {
+      const AUX = /^(am|is|are|was|were|been|be|have|has|had|do|does|did|will|can|could|may|might|must|should|would|go|going)$/i;
+      s = s.replace(
+        /\b(I|you|we|they|he|she|it)\s+([a-z]+)\b(?=[^.!?]*\b(yesterday|last\s+(?:night|week|month|year|mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)|\d+\s+(?:minute|hour|day|week|month|year)s?\s+ago|ago|in\s+\d{4})\b)/gi,
+        (m, subj, verb) => {
+          const v = verb.toLowerCase();
+          if (AUX.test(v)) return m;
+          const to = IRR[v] ? IRR[v][0] : toPast(v);
+          if (to !== verb) {
+            add("Past tense", `${subj} ${verb}`, `${subj} ${to}`, "Past-time marker in the same clause.");
+            return `${subj} ${to}`;
+          }
+          return m;
+        }
+      );
+      s = s.replace(
+        /\b(Yesterday|Last\s+[A-Za-z]+|In\s+\d{4}|\d+\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\s+ago)\b[,\s]+\b(I|you|we|they|he|she|it)\s+([a-z]+)\b/gi,
+        (m, lead, subj, verb) => {
+          const v = verb.toLowerCase();
+          if (AUX.test(v)) return m;
+          const to = IRR[v] ? IRR[v][0] : toPast(v);
+          const rep = `${lead} ${subj} ${to}`;
+          add("Past tense", m, rep, "Time expression fronted.");
+          return rep;
+        }
+      );
+      s = s.replace(
+        /\b([A-Z][a-z]+)\s+([a-z]+)\b(?=[^.!?]*\b(yesterday|last\s+(?:night|week|month|year|mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)|\d+\s+(?:minute|hour|day|week|month|year)s?\s+ago|ago|in\s+\d{4})\b)/g,
+        (m, name, verb) => {
+          const v = verb.toLowerCase();
+          const AUX2 = /^(am|is|are|was|were|been|be|have|has|had|do|does|did|will|can|could|may|might|must|should|would)$/i;
+          if (AUX2.test(v)) return m;
+          const to = IRR[v] ? IRR[v][0] : toPast(v);
+          const rep = `${name} ${to}`;
+          add("Past tense (proper noun)", m, rep, "Past-time marker in the same clause.");
+          return rep;
+        }
+      );
+    })();
+
+    /* Contractions + spacing/punctuation cleanup */
+    s = s.replace(/\bI am\b/g,()=>{ add("Contraction","I am","I'm"); return "I'm"; });
+    const before=s; s=s.replace(/ {2,}/g,' ').replace(/\s+([,.!?;:])/g,'$1'); if(s!==before){ add("Punctuation","extra spaces","cleaned"); }
+
+    return { text:s, count, changes };
+  }
+
+  async function grammarPipeline(text){
+    const lt1=await applyLanguageToolOnceDetailed(text);
+    const local=localFixOnce(lt1.text);
+    const lt2=await applyLanguageToolOnceDetailed(local.text);
+    const finalText=lt2.text;
+    const total=(lt1.count||0)+(local.count||0)+(lt2.count||0);
+    const changes=[...(lt1.changes||[]),...(local.changes||[]),...(lt2.changes||[])];
+    return { text:finalText, total, ltCount:(lt1.count||0)+(lt2.count||0), localCount:(local.count||0), changes };
+  }
+
+  /* Events */
+  ui.define.addEventListener('click', async ()=>{
+    const word=ui.inputEn.value.trim(); if(!word) return;
+    setStatus("Looking up definition…");
+    ui.output.value = await fetchDefinition(word);
+    setStatus("✅ Definition loaded");
+  });
+
+  ui.check.addEventListener('click', async ()=>{
+    const before=ui.output.value.trim(); if(!before) return;
+    setStatus("Grammar checking (LanguageTool → Local rules)…");
+    const res=await grammarPipeline(before);
+    ui.output.value=res.text;
+    const d=diffHL(before,res.text);
+    if(res.text!==before){ ui.origHL.innerHTML=d.origHL; ui.corrHL.innerHTML=d.corrHL; ui.review.style.display="block"; }
+    else{ ui.review.style.display="none"; }
+    renderSuggestions(res.changes);
+    setStatus(`✅ Grammar enhanced (fixed ${res.total} issues | LT: ${res.ltCount}, Local: ${res.localCount})`);
+  });
+
+  ui.clearIn.addEventListener('click',()=>ui.inputEn.value="");
+  ui.clearOut.addEventListener('click',()=>ui.output.value="");
+})();
+</script>
+</body>
+</html>
