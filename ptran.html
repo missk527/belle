@@ -361,7 +361,28 @@ body::after{
         s = s.replace(re, (m) => { add("Preposition (time)", m, to); return to; });
       });
     })();
-
+/* 8) a/an 再保險：但排除 be + V-ing */
+(function(){
+  // a → an
+  s = s.replace(/\ba\s+([aeiouAEIOU]\w+)/g, (m, w, offset, str) => {
+    // 檢查前面是否是 be 動詞 (am/is/are/was/were) + 空格
+    if (/\b(am|is|are|was|were|I'm|He is|She is|They are)\s+$/i.test(str.slice(0, offset))) {
+      return m; // 不改
+    }
+    const rep = `an ${w}`;
+    add("a/an", m, rep);
+    return rep;
+  });
+  // an → a
+  s = s.replace(/\ban\s+([^aeiouAEIOU\s]\w*)/g, (m, w, offset, str) => {
+    if (/\b(am|is|are|was|were|I'm|He is|She is|They are)\s+$/i.test(str.slice(0, offset))) {
+      return m;
+    }
+    const rep = `a ${w}`;
+    add("a/an", m, rep);
+    return rep;
+  });
+})();
     /* Past tense signals */
     (function () {
       const AUX = /^(am|is|are|was|were|been|be|have|has|had|do|does|did|will|can|could|may|might|must|should|would|go|going)$/i;
