@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chinese word </title>
+  <style>
+    :root{
+      --bg1:#ffe6f2; --bg2:#ffcce6; --card:#fff0f6; --ink:#402030; --muted:#805060; --brand:#d46a9f; --accent:#b84d7a;
+      --line:#f29bc2; --grid:#f8cce0; --diag:#f5a6cd;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei","Hiragino Sans CNS","PMingLiU",sans-serif}
+    body::before{content:""; position:fixed; inset:0; pointer-events:none; opacity:.12;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23e68ab8'%3E%3Ccircle cx='25' cy='25' r='10'/%3E%3Ccircle cx='60' cy='20' r='12'/%3E%3Ccircle cx='95' cy='25' r='10'/%3E%3Ccircle cx='45' cy='55' r='14'/%3E%3Cpath d='M88 88c12 14 2 26-18 22-14-3-24-14-26-22-2-9 4-18 14-20 10-2 18 4 30 20z'/%3E%3C/g%3E%3C/svg%3E");
+      background-size:120px 120px; background-repeat:repeat; }
+    .wrap{max-width:1100px;margin:30px auto;padding:0 16px}
+    .app{display:grid;grid-template-columns:360px 1fr;gap:18px}
+    @media (max-width:980px){.app{grid-template-columns:1fr}}
+    .card{background:var(--card);border:2px solid var(--line);border-radius:16px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+    .pane{padding:16px}
+    h1{font-weight:800;font-size:22px;margin:0 0 10px;letter-spacing:.02em}
+    h1::before{content:"🌸 ";}
+    p.help{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.4}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+    .row label{font-size:13px;color:var(--muted)}
+    .row input[type="text"], .row textarea, .row input[type="number"]{width:100%;background:#fff;border:1px solid #f5c1db;color:var(--ink);padding:10px;border-radius:10px;outline:none}
+    textarea{resize:vertical;min-height:64px}
+    .btn{appearance:none;border:2px solid var(--line);background:#ffe6f2;color:var(--ink);padding:9px 12px;border-radius:12px;cursor:pointer;font-weight:600;user-select:none;transition:.15s transform,.15s background}
+    .btn:hover{background:#ffd6eb}
+    .btn:active{transform:translateY(1px)}
+    .btn.brand{border-color:#f29bc2;background:#ffcce0}
+    .btn.success{border-color:#b84d7a;background:#ffe0f0}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .score{font-size:14px;color:#804060}
+    .score b{font-size:18px;color:#402030}
+    .canvas-wrap{position:relative;aspect-ratio:1/1;width:min(86vw,560px);margin:14px auto 10px}
+    canvas{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:12px;touch-action:none}
+    #grid,#preview{pointer-events:none}
+    .hint{display:inline-block;background:#ffd6eb;border:2px dashed var(--line);border-radius:12px;padding:10px 12px;color:#804060;font-size:12px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:6px 10px;border-radius:999px;border:2px solid var(--line);background:#ffe6f2;color:#402030;cursor:pointer}
+    .chip.active{border-color:#f29bc2;background:#ffcce0}
+    .small{font-size:12px;color:#804060}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Traditional Chinese Word</h1>
+    <div class="app">
+      <div class="card pane" id="controls">
+        <div class="row">
+          <label for="wordlist"><b>Word</b></label>
+          <textarea id="wordlist">我你他她人月日的</textarea>
+          <div class="toolbar">
+            <button class="btn brand" id="loadListBtn">Load</button>
+            <button class="btn" id="randomBtn">Random</button>
+            <button class="btn" id="prevBtn">Previous</button>
+            <button class="btn" id="nextBtn">Next</button>
+            <span class="small" id="indexInfo"></span>
+          </div>
+        </div>
+        <div class="row grid">
+          <div>
+            <label>txt</label>
+            <input type="range" id="size" min="6" max="30" value="16" />
+          </div>
+          <div>
+            <label>color</label>
+            <input type="color" id="color" value="#5b3a00" />
+          </div>
+        </div>
+        <div class="row toolbar">
+          <button class="btn" id="toggleGuide">show word</button>
+          <button class="btn" id="undoBtn">undo</button>
+          <button class="btn" id="clearBtn">clear</button>
+        </div>
+        <div class="row toolbar">
+          <button class="btn brand" id="scoreBtn">point</button>
+          <span class="score" id="scoreBox">Mark<b>—</b></span>
+        </div>
+        
+        
+      </div>
+      <div class="card pane">
+        <div class="chips" id="charChips"></div>
+        <div class="canvas-wrap">
+          <canvas id="grid"></canvas>
+          <canvas id="draw"></canvas>
+          <canvas id="preview"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+(function(){
+  const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+  const grid=document.getElementById('grid');
+  const draw=document.getElementById('draw');
+  const preview=document.getElementById('preview');
+  const sizeSlider=document.getElementById('size');
+  const colorInput=document.getElementById('color');
+  const scoreBox=document.getElementById('scoreBox').querySelector('b');
+  const wordlistEl=document.getElementById('wordlist');
+  const chipsEl=document.getElementById('charChips');
+  const indexInfo=document.getElementById('indexInfo');
+
+  let strokes=[]; let currentStroke=null; let correctedStrokes=null;
+  let words=[]; let currentIndex=0; let showGuide=false;
+
+  const fontStack="'Noto Serif TC','PingFang TC','Microsoft JhengHei','Hiragino Sans CNS','PMingLiU',serif";
+
+  function setupCanvases(){
+    const wrap=document.querySelector('.canvas-wrap');
+    const cssW=wrap.clientWidth; const cssH=wrap.clientWidth;
+    [grid,draw,preview].forEach(c=>{c.width=Math.floor(cssW*dpr);c.height=Math.floor(cssH*dpr);c.style.width=cssW+'px';c.style.height=cssH+'px';const ctx=c.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.scale(dpr,dpr);});
+    drawAll();
+  }
+  window.addEventListener('resize',setupCanvases);
+
+  function drawMiZiGe(){
+    const ctx=grid.getContext('2d'); const w=grid.width/dpr,h=grid.height/dpr;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#fffbe0'; ctx.fillRect(0,0,w,h);
+    ctx.lineWidth=2; ctx.strokeStyle=varColor('--line'); ctx.strokeRect(6,6,w-12,h-12);
+    ctx.strokeStyle=varColor('--grid'); ctx.beginPath(); ctx.moveTo(w/2,10); ctx.lineTo(w/2,h-10); ctx.moveTo(10,h/2); ctx.lineTo(w-10,h/2); ctx.stroke();
+    ctx.strokeStyle=varColor('--diag'); ctx.beginPath(); ctx.moveTo(10,10); ctx.lineTo(w-10,h-10); ctx.moveTo(w-10,10); ctx.lineTo(10,h-10); ctx.stroke();
+    if(showGuide){drawReferenceChar(ctx,getCurrentChar(),0.15);}
+  }
+
+  function drawReferenceChar(ctx,ch,a){const w=grid.width/dpr,h=grid.height/dpr;const margin=Math.min(w,h)*0.12;const box=Math.min(w,h)-margin*2;ctx.save();ctx.globalAlpha=a;ctx.fillStyle='#c27c2c';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${box}px ${fontStack}`;ctx.fillText(ch,w/2,h/2);ctx.restore();}
+
+  function redrawStrokes(){const ctx=draw.getContext('2d');const w=draw.width/dpr,h=draw.height/dpr;ctx.clearRect(0,0,w,h);ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=colorInput.value;ctx.lineWidth=+sizeSlider.value;for(const s of strokes){if(s.length<2)continue;ctx.beginPath();ctx.moveTo(s[0].x,s[0].y);for(let i=1;i<s.length;i++){ctx.lineTo(s[i].x,s[i].y);}ctx.stroke();}}
+
+  function redrawPreview(){const ctx=preview.getContext('2d');const w=preview.width/dpr,h=preview.height/dpr;ctx.clearRect(0,0,w,h);if(!correctedStrokes)return;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#cfa24f';ctx.setLineDash([6,5]);ctx.lineWidth=Math.max(8,+sizeSlider.value-2);for(const s of correctedStrokes){if(s.length<2)continue;ctx.beginPath();ctx.moveTo(s[0].x,s[0].y);for(let i=1;i<s.length;i++){ctx.lineTo(s[i].x,s[i].y);}ctx.stroke();}ctx.setLineDash([]);}
+
+  function drawAll(){drawMiZiGe();redrawStrokes();redrawPreview();}
+
+  // === 評分所需方法（IoU） ===
+  function renderCharToCanvas(ch){
+    const c=document.createElement('canvas'); c.width=512; c.height=512; const ctx=c.getContext('2d');
+    ctx.fillStyle='#000'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    let fontSize=430; ctx.font=`${fontSize}px ${fontStack}`; ctx.clearRect(0,0,512,512);
+    ctx.fillText(ch,256,264); // 基線微調
+    return c;
+  }
+  function boundsFromBitmap(canvas){
+    const ctx=canvas.getContext('2d'); const img=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity; let any=false; const w=canvas.width,h=canvas.height;
+    for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ const a=img[(y*w+x)*4+3]; if(a>6){ any=true; if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y; } } }
+    if(!any) return {minX:0,minY:0,maxX:w,maxY:h,width:w,height:h};
+    return {minX,minY,maxX,maxY,width:Math.max(1,maxX-minX+1),height:Math.max(1,maxY-minY+1)};
+  }
+  function drawUserTo(ctx,targetSize){
+    if(!strokes.length) return false;
+    // 取邊界
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity; for(const s of strokes){ for(const p of s){ if(p.x<minX)minX=p.x; if(p.y<minY)minY=p.y; if(p.x>maxX)maxX=p.x; if(p.y>maxY)maxY=p.y; } }
+    const w=maxX-minX||1, h=maxY-minY||1; const pad=18; const box=targetSize-pad*2; const scale=Math.min(box/w,box/h);
+    const cx=targetSize/2, cy=targetSize/2; const drawW=w*scale, drawH=h*scale; const offX=cx-(minX*scale+drawW/2); const offY=cy-(minY*scale+drawH/2);
+    ctx.save(); ctx.translate(offX,offY); ctx.scale(scale,scale);
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#000'; const targetThickness=32; ctx.lineWidth=targetThickness/scale;
+    for(const s of strokes){ if(s.length<2) continue; ctx.beginPath(); ctx.moveTo(s[0].x,s[0].y); for(let i=1;i<s.length;i++){ ctx.lineTo(s[i].x,s[i].y);} ctx.stroke(); }
+    ctx.restore();
+    return true;
+  }
+  function drawRefTo(ctx,ch,targetSize){
+    const c=renderCharToCanvas(ch); const bb=boundsFromBitmap(c); const pad=18; const box=targetSize-pad*2; const scale=Math.min(box/bb.width,box/bb.height);
+    const dw=bb.width*scale, dh=bb.height*scale; const ox=(targetSize-dw)/2 - bb.minX*scale; const oy=(targetSize-dh)/2 - bb.minY*scale;
+    ctx.save(); ctx.translate(ox,oy); ctx.scale(scale,scale); ctx.drawImage(c,0,0); ctx.restore();
+  }
+  function computeIoU(userCtx,refCtx,size){
+    const a=userCtx.getImageData(0,0,size,size).data; const b=refCtx.getImageData(0,0,size,size).data; let inter=0,uni=0;
+    for(let i=0;i<a.length;i+=4){ const aa=a[i+3]>20, bb=b[i+3]>20; if(aa||bb) uni++; if(aa&&bb) inter++; }
+    if(uni===0) return 0; return inter/uni;
+  }
+  function score(){
+    const S=256; const u=document.createElement('canvas'); u.width=S; u.height=S; const uc=u.getContext('2d');
+    const r=document.createElement('canvas'); r.width=S; r.height=S; const rc=r.getContext('2d');
+    const ok=drawUserTo(uc,S); if(!ok) return null; drawRefTo(rc,getCurrentChar(),S); return Math.round(computeIoU(uc,rc,S)*100);
+  }
+
+  function getPt(e){const r=draw.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;return{x,y};}
+
+  ;(function(){let drawing=false;draw.addEventListener('pointerdown',e=>{e.preventDefault();draw.setPointerCapture(e.pointerId);drawing=true;currentStroke=[];const p=getPt(e);currentStroke.push(p);strokes.push(currentStroke);redrawStrokes();},{passive:false});draw.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const p=getPt(e);currentStroke.push(p);redrawStrokes();},{passive:false});const end=e=>{if(!drawing)return;e.preventDefault();drawing=false;if(currentStroke&&currentStroke.length<2){strokes.pop();}currentStroke=null;correctedStrokes=null;redrawPreview();};draw.addEventListener('pointerup',end,{passive:false});draw.addEventListener('pointercancel',end,{passive:false});draw.addEventListener('pointerleave',end,{passive:false});})();
+
+  function varColor(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+
+  function getCurrentChar(){return words.length?words[currentIndex]:'一';}
+  function setWordsFromInput(){const raw=(wordlistEl.value||'').replace(/\s+/g,'');const arr=Array.from(raw);words=arr.filter(ch=>/\S/.test(ch));if(!words.length)words=['一','人','天','大','心','愛','勇','學','書','龍','樂'];currentIndex=0;renderChips();setIndex(0);} 
+  function renderChips(){chipsEl.innerHTML='';words.forEach((ch,i)=>{const b=document.createElement('button');b.textContent=ch;b.className='chip'+(i===currentIndex?' active':'');b.onclick=()=>setIndex(i);chipsEl.appendChild(b);});}
+  function setIndex(i){currentIndex=((i%words.length)+words.length)%words.length;indexInfo.textContent=`（${currentIndex+1}/${words.length}）`;strokes=[];correctedStrokes=null;drawAll();renderChips();scoreBox.textContent='—';}
+
+  document.getElementById('toggleGuide').onclick=()=>{showGuide=!showGuide;drawAll();};
+  document.getElementById('undoBtn').onclick=()=>{strokes.pop();drawAll();};
+  document.getElementById('clearBtn').onclick=()=>{strokes=[];drawAll();};
+  document.getElementById('loadListBtn').onclick=()=>setWordsFromInput();
+  document.getElementById('nextBtn').onclick=()=>setIndex(currentIndex+1);
+  document.getElementById('prevBtn').onclick=()=>setIndex(currentIndex-1);
+  document.getElementById('randomBtn').onclick=()=>{if(!words.length)return;setIndex(Math.floor(Math.random()*words.length));};
+  // 啟用評分按鈕
+  document.getElementById('scoreBtn').onclick=()=>{ const s=score(); scoreBox.textContent = (s==null? '—' : (s+' 分')); };
+
+  setupCanvases();
+  setWordsFromInput();
+})();
+</script>
+</body>
+</html>
