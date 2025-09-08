@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Learning</title>
+  <meta name="description" content="Student Belle's personal learning portal with subject links." />
+  <style>
+    :root{
+      --bg-start:#fff176;
+      --bg-end:#ffd54f;
+      --card-bg:#fff3e0;
+      --card-border:#f9a825;
+      --text:#4e342e;
+      --muted:#8d6e63;
+      --accent:#ef6c00;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family:"Comic Sans MS","Segoe UI",Arial,sans-serif;
+      color:var(--text);
+      background:linear-gradient(160deg,var(--bg-start),var(--bg-end));
+      min-height:100svh;
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .wrap{width:min(960px,100%);}
+    header{text-align:center;margin-bottom:24px;}
+    h1{font-size:clamp(24px,3.2vw,36px);margin:0 0 6px 0;letter-spacing:.5px;color:var(--accent);}
+    .student-name{margin-top:6px;font-size:18px;color:var(--text);font-weight:600;}
+    .student-year{margin-top:4px;font-size:16px;color:var(--muted);}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:20px;}
+    .subject{
+      display:flex;align-items:center;justify-content:center;
+      text-decoration:none;background:var(--card-bg);
+      border:2px solid var(--card-border);border-radius:20px;
+      padding:20px 18px;min-height:80px;font-size:18px;font-weight:600;
+      color:var(--text);text-align:center;
+      transition:transform .15s ease,box-shadow .15s ease;
+      box-shadow:0 8px 16px rgba(0,0,0,.15);
+    }
+    .subject:hover{transform:scale(1.05);box-shadow:0 12px 24px rgba(0,0,0,.25);background:#ffe0b2;}
+    .subject:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(239,108,0,.5);}
+    @media (max-width:420px){.subject{min-height:64px;font-size:16px;padding:18px 16px;}}
+  </style>
+
+  <!-- PWA Icons & Manifest (相對路徑版本) -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <meta name="theme-color" content="#965fc1">
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Learning">
+</head>
+<body>
+  <main class="wrap" role="main">
+    <header>
+      <h1>🐾 Student Portal 🐾</h1>
+      <div class="student-name">Student: Belle</div>
+      <div class="student-year">Prep 7</div>
+    </header>
+
+    <section class="grid" aria-label="Subject list">
+      <a class="subject" href="https://missk527.github.io/belle/pinkspell.html" target="_blank" rel="noopener">🦊 English spelling</a>
+      <a class="subject" href="https://missk527.github.io/eng/1wn.html" target="_blank" rel="noopener">🐒 English Writing</a>
+      <a class="subject" href="https://missk527.github.io/belle/ptran.html" target="_blank" rel="noopener">🐼 English helper</a>
+      <a class="subject" href="https://missk527.github.io/com/com1.html" target="_blank" rel="noopener">🦉 Comprehension game</a>
+      <a class="subject" href="https://missk527.github.io/belle/math.html" target="_blank" rel="noopener">🦁 Mathematics</a>
+      <a class="subject" href="https://missk527.github.io/bio/bio1c.html" target="_blank" rel="noopener">🐒 Biology</a>
+      <a class="subject" href="https://missk527.github.io/chem/1ai.html" target="_blank" rel="noopener">🦉 Chemistry</a>
+      <a class="subject" href="https://missk527.github.io/phy/1work.html" target="_blank" rel="noopener">🐢 Physics</a>
+      <a class="subject" href="https://missk527.github.io/belle/french.html" target="_blank" rel="noopener">🦉 French</a>
+      <a class="subject" href="https://missk527.github.io/happymath/index.html" target="_blank" rel="noopener">🦁 Timetable</a>
+      <a class="subject" href="https://missk527.github.io/belle/cnpink.html" target="_blank" rel="noopener">🐼 Traditional Chinese</a>
+    </section>
+  </main>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .catch(err => console.error('Service Worker 註冊失敗:', err));
+    }
+  </script>
+</body>
+</html>
