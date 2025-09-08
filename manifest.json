@@ -1,6 +1,6 @@
 {
   "name": "Student Portal",
-  "short_name": "Belle",
+  "short_name": "Portal",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
