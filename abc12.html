@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ABC Tracing Game — Uppercase, Lowercase, Cursive & Numbers</title>
+<style>
+  :root{
+    --pink:#ff5ea8;
+    --lav:#b27cf6;
+    --lav-2:#d1b3ff;
+    --bg:#fff5fb;
+    --ink:#3b1d56;
+    --light:#fbe5f2;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    color:var(--ink);
+    background: radial-gradient(1200px 600px at 10% -10%, #ffe0f0 0%, #fde7ff 35%, #f7f1ff 60%, #fff 100%);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  header{
+    padding:18px 20px;
+    background: linear-gradient(120deg, var(--pink), var(--lav));
+    color:white;
+    position:sticky; top:0; z-index:10;
+    box-shadow:0 10px 30px rgba(178,124,246,.25);
+  }
+  header .title{
+    font-size: clamp(20px, 2.4vw, 28px);
+    font-weight:800;
+    letter-spacing:.5px;
+  }
+  header .subtitle{
+    opacity:.95;
+    font-size:.95rem;
+  }
+  .wrap{
+    width: min(1100px, 96vw);
+    margin: 16px auto 28px;
+    display:grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap:18px;
+  }
+  @media (max-width: 900px){
+    .wrap{ grid-template-columns: 1fr; }
+  }
+  .card{
+    background:white;
+    border-radius:20px;
+    box-shadow:0 20px 50px rgba(178,124,246,.20), 0 8px 16px rgba(255,94,168,.12);
+    border:1px solid #f3dfff;
+  }
+  .panel{
+    padding:16px;
+  }
+  .panel h3{
+    margin:.25rem 0 1rem;
+    font-size:1.05rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#6b4c91;
+  }
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+  }
+  .btn{
+    appearance:none;
+    border:0;
+    padding:10px 14px;
+    border-radius:12px;
+    background:linear-gradient(135deg, #ffd1e7, #e6ccff);
+    color:#6b3a8f;
+    font-weight:700;
+    cursor:pointer;
+    transition: transform .05s ease, box-shadow .2s ease;
+    box-shadow:0 6px 16px rgba(178,124,246,.25);
+    user-select:none;
+  }
+  .btn:hover{ box-shadow:0 10px 24px rgba(178,124,246,.32); }
+  .btn:active{ transform: translateY(1px) scale(.99); }
+  .btn.secondary{
+    background: white;
+    border:2px solid var(--lav-2);
+  }
+  .segmented{
+    background:#fff;
+    border:1px solid #eedcff;
+    border-radius:12px;
+    display:inline-flex;
+    overflow:hidden;
+  }
+  .segmented button{
+    border:0;
+    padding:10px 12px;
+    background:transparent;
+    font-weight:700;
+    color:#6b3a8f;
+    cursor:pointer;
+  }
+  .segmented button.active{
+    background: linear-gradient(135deg, #ffd1e7, #e6ccff);
+  }
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:14px;
+  }
+  .stage{
+    position:relative;
+    border-radius:20px;
+    overflow:hidden;
+    background: conic-gradient(from 180deg at 10% 10%, #fff 0%, #fff 50%, #fff 100%);
+    border:1px dashed #eedcff;
+  }
+  .stage-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 14px;
+    border-bottom:1px dashed #f0e3ff;
+    background:linear-gradient(180deg, #fff, #fff9ff);
+  }
+  .letter-badge{
+    font-size: 22px;
+    font-weight:900;
+    color:var(--pink);
+  }
+  .guide-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio: 4 / 3;
+    background-image:
+      linear-gradient(#f6eaff 1px, transparent 1px),
+      linear-gradient(90deg, #f6eaff 1px, transparent 1px);
+    background-size: 24px 24px, 24px 24px;
+    background-position: center center;
+  }
+  #guideSVG{
+    position:absolute; inset:0;
+  }
+  #drawCanvas{
+    position:absolute; inset:0;
+    touch-action: none;
+  }
+  .tools{
+    padding:12px 14px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    border-top:1px dashed #f0e3ff;
+    background:linear-gradient(0deg, #fff, #fff9ff);
+  }
+  .tools label{ font-size:.9rem; color:#6b4c91; font-weight:700; }
+  .tools input[type="range"]{ width:140px; }
+  .progress{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  }
+  .pill{
+    padding:6px 10px; border-radius:999px; background:#ffe6f4; color:#6b3a8f; font-weight:800; font-size:.9rem;
+    border:1px solid #ffd5ef;
+  }
+  .list{
+    padding:16px;
+    display:grid;
+    gap:10px;
+    grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  }
+  .chip{
+    border:1px solid #eedcff; background:#fff; color:#6b4c91;
+    border-radius:12px; padding:6px 0; text-align:center; font-weight:800; cursor:pointer;
+    transition: background .15s ease, transform .05s ease;
+    user-select:none;
+  }
+  .chip.done{ background:linear-gradient(135deg, #ffd1e7, #e6ccff); color:#4f2c78; }
+  .muted{ color:#8f7fa8; font-size:.92rem; }
+  footer{ text-align:center; padding:18px; color:#8c7aa6; }
+  /* Extra: make the dashed guide more obvious */
+  .arrow{ fill:#d3c0ff; }
+  .stroke-num{
+    font: 700 28px/1 ui-sans-serif,system-ui;
+    fill:#b089ff;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">ABC Tracing Game</div>
+    <div class="subtitle">Practice uppercase, lowercase, cursive & numbers (1–20). Dashed guides help kids see where to trace. Theme: Pink & Purple 💖💜</div>
+  </header>
+
+  <div class="wrap">
+    <!-- LEFT: Stage -->
+    <section class="card stage" aria-label="Tracing stage">
+      <div class="stage-top">
+        <div class="letter-badge" id="letterBadge">A</div>
+        <div class="controls">
+          <div class="segmented" role="tablist" aria-label="Mode">
+            <button id="modeUpper" class="active" role="tab" aria-selected="true">Uppercase</button>
+            <button id="modeLower" role="tab" aria-selected="false">Lowercase</button>
+            <button id="modeBoth" role="tab" aria-selected="false">Both</button>
+            <button id="modeCursive" role="tab" aria-selected="false">Cursive</button>
+            <button id="modeNumbers" role="tab" aria-selected="false">Numbers</button>
+          </div>
+          <button id="prevBtn" class="btn secondary" title="Previous">◀ Prev</button>
+          <button id="nextBtn" class="btn secondary" title="Next">Next ▶</button>
+          <button id="randomBtn" class="btn" title="Random">Shuffle 🔀</button>
+        </div>
+      </div>
+
+      <div class="guide-wrap" id="guideWrap">
+        <!-- Dotted SVG guide -->
+        <svg id="guideSVG" viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <!-- Main writing lines -->
+          <rect x="0" y="450" width="1200" height="2" fill="#e7d6ff" />
+          <rect x="0" y="300" width="1200" height="2" fill="#f1e7ff" />
+          <rect x="0" y="600" width="1200" height="2" fill="#f1e7ff" />
+
+          <!-- Dashed text guide (very clear for kids) -->
+          <text id="guideText" x="50%" y="62%" text-anchor="middle" dominant-baseline="middle"
+                font-size="600" font-weight="900"
+                fill="none" stroke="#c8b5ff" stroke-width="22"
+                stroke-linecap="round" stroke-linejoin="round"
+                stroke-dasharray="28 22"
+                style="filter:url(#glow);">
+            A
+          </text>
+          <!-- Optional small arrows to show direction (subtle) -->
+          <g id="startArrow" class="arrow" opacity="0.8">
+            <path d="M0 0 l 26 0 l -13 18 z" />
+          </g>
+          <g id="endDot" opacity="0.9">
+            <circle cx="0" cy="0" r="10" fill="#ffb0d7"/>
+            <circle cx="0" cy="0" r="5" fill="#ff5ea8"/>
+          </g>
+          <text id="strokeNum" class="stroke-num" x="60" y="100">1</text>
+        </svg>
+
+        <!-- Drawing Canvas -->
+        <canvas id="drawCanvas" aria-label="Draw here to trace the letter"></canvas>
+      </div>
+
+      <div class="tools">
+        <div class="progress">
+          <span class="pill" id="progressPill">0 / 26 done</span>
+          <span class="muted" id="tip">Tip: Trace the dashed guide. Try to write nice & big!</span>
+        </div>
+        <div style="flex:1"></div>
+        <label for="size">Brush</label>
+        <input id="size" type="range" min="2" max="30" value="10" />
+        <button id="eraserBtn" class="btn secondary" title="Eraser">Eraser</button>
+        <button id="clearBtn" class="btn secondary" title="Clear drawing">Clear</button>
+        <button id="saveBtn" class="btn" title="Save your drawing as an image">Save PNG</button>
+      </div>
+    </section>
+
+    <!-- RIGHT: Letter list / progress -->
+    <aside class="card panel" aria-label="Progress & letters">
+      <h3>Progress</h3>
+      <div class="controls" style="margin-bottom:10px">
+        <button id="resetProgress" class="btn secondary">Reset Progress</button>
+      </div>
+      <div class="list" id="letterList" aria-live="polite"></div>
+    </aside>
+  </div>
+
+  <footer>
+    Made with 💖💜 — English UI. Works offline in a single file.
+  </footer>
+
+<script>
+(function(){
+  const upper = Array.from({length:26},(_,i)=>String.fromCharCode(65+i));
+  const lower = Array.from({length:26},(_,i)=>String.fromCharCode(97+i));
+  const numbers = Array.from({length:20},(_,i)=> String(i+1)); // 1..20
+  // Simple "cursive-like" forms using a script font fallback via SVG font-style (not perfect, but kid-friendly)
+  const cursive = upper.map(c => c); // We'll switch font-family to a cursive stack when in cursive mode
+
+  const state = {
+    mode: 'uppercase', // 'lowercase' | 'both' | 'cursive' | 'numbers'
+    index: 0,
+    drawnDist: 0,
+    isEraser: false,
+    completedUpper: new Set(JSON.parse(localStorage.getItem('abc_done_upper')||'[]')),
+    completedLower: new Set(JSON.parse(localStorage.getItem('abc_done_lower')||'[]')),
+    completedCursive: new Set(JSON.parse(localStorage.getItem('abc_done_cursive')||'[]')),
+    completedNumbers: new Set(JSON.parse(localStorage.getItem('abc_done_numbers')||'[]')),
+  };
+
+  // DOM elements
+  const guideText = document.getElementById('guideText');
+  const letterBadge = document.getElementById('letterBadge');
+  const guideWrap = document.getElementById('guideWrap');
+  const canvas = document.getElementById('drawCanvas');
+  const sizeInput = document.getElementById('size');
+  const progressPill = document.getElementById('progressPill');
+  const letterList = document.getElementById('letterList');
+  const tipEl = document.getElementById('tip');
+  const startArrow = document.getElementById('startArrow');
+  const endDot = document.getElementById('endDot');
+  const strokeNum = document.getElementById('strokeNum');
+
+  const modeUpper = document.getElementById('modeUpper');
+  const modeLower = document.getElementById('modeLower');
+  const modeBoth  = document.getElementById('modeBoth');
+  const modeCursive = document.getElementById('modeCursive');
+  const modeNumbers = document.getElementById('modeNumbers');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const randomBtn = document.getElementById('randomBtn');
+  const eraserBtn = document.getElementById('eraserBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const resetProgress = document.getElementById('resetProgress');
+
+  // Initialize canvas sizing
+  function fitCanvas(){
+    const rect = guideWrap.getBoundingClientRect();
+    canvas.width = Math.max(600, Math.floor(rect.width));
+    canvas.height = Math.max(450, Math.floor(rect.height));
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+  }
+
+  window.addEventListener('resize', fitCanvas, {passive:true});
+
+  // Drawing
+  const ctx = canvas.getContext('2d');
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  let drawing = false;
+  let last = null;
+
+  function setTool(){
+    ctx.globalCompositeOperation = state.isEraser ? 'destination-out' : 'source-over';
+    eraserBtn.textContent = state.isEraser ? 'Eraser ON' : 'Eraser';
+    eraserBtn.style.background = state.isEraser ? 'linear-gradient(135deg, #ffd1e7, #e6ccff)' : '';
+  }
+
+  function startDraw(x,y){
+    drawing = true; last = {x,y};
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+  }
+  function moveDraw(x,y){
+    if(!drawing) return;
+    ctx.lineWidth = Number(sizeInput.value);
+    ctx.strokeStyle = '#6b3a8f';
+    ctx.lineTo(x,y);
+    ctx.setLineDash([0,0]); // solid pencil
+    ctx.stroke();
+    const dx = x - last.x, dy = y - last.y;
+    state.drawnDist += Math.hypot(dx,dy);
+    last = {x,y};
+  }
+  function endDraw(){
+    drawing = false; last = null;
+    maybeComplete();
+  }
+
+  function posFromEvent(e){
+    const rect = canvas.getBoundingClientRect();
+    const px = (e.touches? e.touches[0].clientX : e.clientX) - rect.left;
+    const py = (e.touches? e.touches[0].clientY : e.clientY) - rect.top;
+    const sx = canvas.width / rect.width;
+    const sy = canvas.height / rect.height;
+    return { x: px * sx, y: py * sy };
+  }
+
+  canvas.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    const {x,y} = posFromEvent(e);
+    startDraw(x,y);
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!drawing) return;
+    const {x,y} = posFromEvent(e);
+    moveDraw(x,y);
+  });
+  canvas.addEventListener('pointerup', endDraw);
+  canvas.addEventListener('pointercancel', endDraw);
+  canvas.addEventListener('pointerleave', endDraw);
+
+  canvas.addEventListener('touchstart', e=>{ e.preventDefault(); });
+  canvas.addEventListener('touchmove', e=>{ e.preventDefault(); });
+
+  modeUpper.addEventListener('click', ()=> setMode('uppercase'));
+  modeLower.addEventListener('click', ()=> setMode('lowercase'));
+  modeBoth .addEventListener('click', ()=> setMode('both'));
+  modeCursive.addEventListener('click', ()=> setMode('cursive'));
+  modeNumbers.addEventListener('click', ()=> setMode('numbers'));
+  prevBtn.addEventListener('click', prevItem);
+  nextBtn.addEventListener('click', nextItem);
+  randomBtn.addEventListener('click', randomItem);
+  eraserBtn.addEventListener('click', ()=>{ state.isEraser = !state.isEraser; setTool(); });
+  clearBtn.addEventListener('click', clearCanvas);
+  saveBtn.addEventListener('click', savePNG);
+  resetProgress.addEventListener('click', ()=>{
+    if(confirm('Reset all progress?')){
+      state.completedUpper.clear();
+      state.completedLower.clear();
+      state.completedCursive.clear();
+      state.completedNumbers.clear();
+      syncLocal();
+      updateProgressUI();
+      renderList();
+    }
+  });
+
+  function setMode(m){
+    state.mode = m;
+    [modeUpper, modeLower, modeBoth, modeCursive, modeNumbers].forEach(btn=>btn.classList.remove('active'));
+    ({uppercase:modeUpper, lowercase:modeLower, both:modeBoth, cursive:modeCursive, numbers:modeNumbers}[m]).classList.add('active');
+    ensureIndexInMode();
+    loadCurrent();
+    renderList();
+    updateProgressUI();
+  }
+
+  function ensureIndexInMode(){
+    const pool = getPool();
+    if(state.index >= pool.length) state.index = 0;
+  }
+
+  function getPool(){
+    if(state.mode === 'uppercase') return upper;
+    if(state.mode === 'lowercase') return lower;
+    if(state.mode === 'both') return upper.concat(lower);
+    if(state.mode === 'cursive') return cursive;
+    if(state.mode === 'numbers') return numbers;
+  }
+
+  function currentItem(){
+    const pool = getPool();
+    return pool[state.index];
+  }
+
+  function nextItem(){
+    const pool = getPool();
+    state.index = (state.index + 1) % pool.length;
+    loadCurrent();
+  }
+  function prevItem(){
+    const pool = getPool();
+    state.index = (state.index - 1 + pool.length) % pool.length;
+    loadCurrent();
+  }
+  function randomItem(){
+    const pool = getPool();
+    state.index = Math.floor(Math.random()*pool.length);
+    loadCurrent();
+  }
+
+  function loadCurrent(){
+    const item = currentItem();
+    letterBadge.textContent = item;
+    guideText.textContent = item;
+    // font tweaks
+    if(state.mode==='cursive'){
+      guideText.setAttribute('font-weight','700');
+      guideText.setAttribute('font-family','"Comic Sans MS", "Brush Script MT", "Segoe Script", cursive');
+      guideText.setAttribute('stroke-dasharray','20 18'); // slightly tighter dashed look for cursive
+    }else if(state.mode==='numbers'){
+      guideText.setAttribute('font-weight','900');
+      guideText.removeAttribute('font-family');
+      guideText.setAttribute('stroke-dasharray','28 22');
+    }else{
+      guideText.setAttribute('font-weight','900');
+      guideText.removeAttribute('font-family');
+      guideText.setAttribute('stroke-dasharray','28 22');
+    }
+
+    // Size adjust for multi-character (10–20)
+    const len = String(item).length;
+    const size = len===1 ? 600 : (len===2 ? 420 : 340);
+    guideText.setAttribute('font-size', size);
+
+    // Place start arrow & end dot on left-to-right
+    const startX = 180, startY = 540;
+    const endX = 1020, endY = 540;
+    startArrow.setAttribute('transform', `translate(${startX},${startY})`);
+    endDot.setAttribute('transform', `translate(${endX},${endY})`);
+    strokeNum.textContent = '1'; // simple step indicator (1)
+
+    clearCanvas(true);
+    setTool();
+    tipEl.textContent = 'Trace the dashed guide. Big shapes are easier!';
+    highlightActiveChip();
+  }
+
+  function clearCanvas(soft=false){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    state.drawnDist = 0;
+    if(!soft) tipEl.textContent = 'Canvas cleared. Try again!';
+  }
+
+  function maybeComplete(){
+    const threshold = 900; // pixels of stroke length
+    if(state.drawnDist >= threshold){
+      const item = currentItem();
+      if(state.mode==='uppercase') state.completedUpper.add(item);
+      else if(state.mode==='lowercase') state.completedLower.add(item);
+      else if(state.mode==='both'){
+        if(/[A-Z]/.test(item)) state.completedUpper.add(item);
+        else state.completedLower.add(item);
+      } else if(state.mode==='cursive') state.completedCursive.add(item);
+      else if(state.mode==='numbers') state.completedNumbers.add(item);
+      syncLocal();
+      updateProgressUI();
+      renderList();
+      tipEl.textContent = 'Great job! Counted as done 🎉';
+      state.drawnDist = 0;
+    }
+  }
+
+  function syncLocal(){
+    localStorage.setItem('abc_done_upper', JSON.stringify(Array.from(state.completedUpper)));
+    localStorage.setItem('abc_done_lower', JSON.stringify(Array.from(state.completedLower)));
+    localStorage.setItem('abc_done_cursive', JSON.stringify(Array.from(state.completedCursive)));
+    localStorage.setItem('abc_done_numbers', JSON.stringify(Array.from(state.completedNumbers)));
+  }
+
+  function updateProgressUI(){
+    let total = 0, done = 0;
+    if(state.mode==='uppercase'){ total=26; done=state.completedUpper.size; }
+    else if(state.mode==='lowercase'){ total=26; done=state.completedLower.size; }
+    else if(state.mode==='both'){ total=52; done=state.completedUpper.size + state.completedLower.size; }
+    else if(state.mode==='cursive'){ total=26; done=state.completedCursive.size; }
+    else if(state.mode==='numbers'){ total=20; done=state.completedNumbers.size; }
+    progressPill.textContent = `${done} / ${total} done`;
+  }
+
+  function renderList(){
+    const pool = getPool();
+    letterList.innerHTML='';
+    pool.forEach((ch, idx)=>{
+      const chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.textContent = ch;
+      let done=false;
+      if(state.mode==='uppercase') done = state.completedUpper.has(ch);
+      else if(state.mode==='lowercase') done = state.completedLower.has(ch);
+      else if(state.mode==='both') done = (/[A-Z]/.test(ch) ? state.completedUpper.has(ch) : state.completedLower.has(ch));
+      else if(state.mode==='cursive') done = state.completedCursive.has(ch);
+      else if(state.mode==='numbers') done = state.completedNumbers.has(ch);
+      if(done) chip.classList.add('done');
+      chip.addEventListener('click', ()=>{
+        state.index = idx;
+        loadCurrent();
+        window.scrollTo({top:0, behavior:'smooth'});
+      });
+      letterList.appendChild(chip);
+    });
+    highlightActiveChip();
+  }
+  function highlightActiveChip(){
+    [...letterList.children].forEach((chip, idx)=>{
+      chip.style.transform = idx===state.index ? 'scale(1.06)' : '';
+      chip.style.outline = idx===state.index ? '3px solid #f7d8ff' : 'none';
+    });
+  }
+
+  function savePNG(){
+    const link = document.createElement('a');
+    const l = currentItem();
+    link.download = `trace-${l}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'ArrowRight') nextItem();
+    if(e.key === 'ArrowLeft')  prevItem();
+    if(e.key === ' ') { e.preventDefault(); randomItem(); }
+  });
+
+  // Start
+  fitCanvas();
+  setMode('uppercase');
+  renderList();
+  updateProgressUI();
+})();
+</script>
+</body>
+</html>
