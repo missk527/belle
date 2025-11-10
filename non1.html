@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Section 2 Test 5 – Non‑Verbal Reasoning (Practice)</title>
+<style>
+  :root{
+    --y1:#FFEB3B;   /* primary yellow */
+    --y2:#FDD835;   /* slightly darker */
+    --y3:#FBC02D;   /* hover/active */
+    --ink:#212121;
+    --muted:#666;
+    --bg:#FFFDE7;
+    --ok:#2E7D32;
+    --no:#C62828;
+  }
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    color:var(--ink);
+    background: linear-gradient(180deg,var(--bg), #fff);
+  }
+  header{
+    background:linear-gradient(90deg,var(--y1),var(--y2));
+    padding:14px 20px;
+    position:sticky;
+    top:0;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+    z-index:2;
+  }
+  .title{
+    font-weight:800;
+    letter-spacing:.3px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .mark-badge{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:700;
+    background:#ffffffaa;
+    padding:6px 12px;
+    border-radius:999px;
+    box-shadow:inset 0 0 0 2px #fff, 0 1px 4px rgba(0,0,0,.15);
+  }
+  .mark-dot{
+    width:18px;height:18px;border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, var(--y2), var(--y3));
+    border:2px solid #fff;
+    box-shadow:0 0 0 2px #00000022;
+  }
+
+  .wrap{max-width:900px;margin:22px auto;padding:0 16px 40px;}
+
+  .progress{
+    height:10px;background:#00000010;border-radius:999px;overflow:hidden;margin:12px 0 24px
+  }
+  .progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--y2),var(--y3));width:0%}
+
+  .card{
+    background:#fff;
+    border-radius:18px;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+    padding:20px;
+  }
+  .meta{
+    display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:600;margin-bottom:6px
+  }
+  .qtext{font-size:1.15rem;line-height:1.45;margin:8px 0 16px}
+  .options{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  button.choice{
+    text-align:left;border:2px solid #00000010;border-radius:14px;background:#fff;padding:14px;
+    font-size:1rem;cursor:pointer;display:flex;gap:10px;align-items:center;transition:.15s;
+  }
+  button.choice:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.10);border-color:var(--y2)}
+  button.choice.selected{border-color:var(--y3);box-shadow:0 0 0 4px #FBC02D33}
+  .opt-letter{
+    font-weight:800;background:var(--y1);border-radius:10px;padding:6px 10px;min-width:32px;text-align:center;
+    box-shadow: inset 0 -2px 0 var(--y3);
+  }
+  .svgbox{width:90px;height:90px;display:grid;place-items:center;background:#FFFDE7;border-radius:10px;border:1px dashed #FDD835}
+  .controls{
+    margin-top:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap
+  }
+  .btn{
+    border:none;background:var(--y2);padding:12px 18px;border-radius:12px;font-weight:800;cursor:pointer;
+    box-shadow:0 6px 18px rgba(251,192,45,.45);transition:.15s;
+  }
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .btn:hover:not(:disabled){transform:translateY(-1px);background:var(--y3)}
+  .status{font-weight:700}
+  .pill{padding:6px 10px;border-radius:999px;background:#00000008}
+  .hidden{display:none}
+  .correct{color:var(--ok)}
+  .wrong{color:var(--no)}
+  footer{margin-top:28px;color:var(--muted);text-align:center}
+  .small{font-size:.9rem}
+  .review{margin-top:16px}
+  .review details{margin:8px 0;background:#fff;border-radius:12px;padding:10px;border:1px solid #0000000f}
+  .review summary{font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <span>🧠 Section 2 – Non‑Verbal Reasoning</span>
+    <span class="mark-badge" title="Your marks so far">
+      <span class="mark-dot"></span>
+      <span id="markText">Marks: 0</span>
+    </span>
+  </div>
+</header>
+<div class="wrap">
+  <div class="progress"><span id="bar"></span></div>
+  <div class="card">
+    <div class="meta">
+      <span class="pill" id="qNumber">Question 1 / 30</span>
+      <span class="pill" id="topicTag">Pattern & Rotations</span>
+    </div>
+    <div id="qtext" class="qtext"></div>
+    <div id="options" class="options"></div>
+    <div class="controls">
+      <div class="status" id="statusMsg"></div>
+      <div>
+        <button class="btn" id="checkBtn" disabled>Check</button>
+        <button class="btn" id="nextBtn" disabled>Next</button>
+      </div>
+    </div>
+    <div id="explain" class="small hidden"></div>
+  </div>
+
+  <div id="result" class="card hidden" style="margin-top:16px">
+    <h2 style="margin:0">🎉 Finished!</h2>
+    <p class="qtext">You scored <b id="finalScore">0/30</b>.</p>
+    <div class="review">
+      <details>
+        <summary>Review answers</summary>
+        <ol id="reviewList"></ol>
+      </details>
+    </div>
+  </div>
+
+  <footer class="small">Yellow theme • One question at a time • Your work is marked instantly ✓</footer>
+</div>
+
+<script>
+// 30 questions – mixed (non‑verbal style, simple shapes, rotations, sequences).
+const QUESTIONS = [
+  {
+    t:"Pattern & Rotations",
+    q:"Which option completes the sequence of arrows: ↑, →, ↓, ?",
+    o:["↑","↗","←","↘","↓"], a:2,
+    e:"The arrow rotates 90° clockwise each time: up → right → down → left."
+  },
+  {t:"Analogy (Shapes)", q:"Square : 4 sides :: Pentagon : ?", o:["3","4","5","6","8"], a:2, e:"A pentagon has 5 sides."},
+  {t:"Mirror", q:"A shape shows ▶ on the left. In a vertical mirror, it looks like?", o:["▶","◀","▲","▼","◆"], a:1, e:"A triangle pointing right (▶) becomes ◀ in a vertical mirror."},
+  {t:"Counting", q:"How many triangles are in a star made by overlapping two triangles?", o:["4","6","8","10","12"], a:3, e:"There are 6 small triangles and 2 large: total 8."},
+  {t:"Rotation", q:"Rotate the L‑shape 90° clockwise. It will point…", o:["up","down","left","right","nowhere"], a:3, e:"An L becomes ⅃ which opens to the left."},
+  {t:"Sequence", q:"Black, white, black, white, … What comes next?", o:["black","white","grey","yellow","none"], a:0, e:"It alternates; next is black."},
+  {t:"Grids", q:"In a 2×2 grid, three cells have ● and the top‑right is empty. After a 90° clockwise rotation, the empty cell will be…", o:["top‑right","bottom‑right","bottom‑left","top‑left","center"], a:1, e:"Top‑right moves to bottom‑right."},
+  {t:"Odd One Out", q:"Choose the odd one out.", o:["○","◇","□","⬣","●"], a:4, e:"● is filled while others are outlines."},
+  {t:"Angles", q:"Which is a right angle?", o:["30°","45°","60°","90°","120°"], a:3, e:"A right angle is 90°."},
+  {t:"Rotation", q:"A clock hand points at 3. After turning 180°, it points at…", o:["9","12","6","3","1"], a:0, e:"3 → 9 after 180°."},
+  {t:"Mirror", q:"Vertical mirror of ↗ is…", o:["↖","↗","↘","↙","↓"], a:2, e:"Right becomes left; ↗ becomes ↖? Wait—vertical mirror over y‑axis flips horizontal: ↗ → ↖. But options have ↘ at index 2. Correct is ↖ (index 0)."},
+];
+
+// Add more generated to reach 30
+const more = [
+  {t:"Series", q:"Fill the blank: 2, 4, 8, 16, __", o:["18","24","30","32","64"], a:3, e:"Doubles each time; 32."},
+  {t:"Counting", q:"How many lines of symmetry does a rectangle (not a square) have?", o:["0","1","2","4","8"], a:2, e:"Two: vertical and horizontal."},
+  {t:"Pattern", q:"Circle, square, circle, square, circle, ?", o:["triangle","square","circle","hexagon","diamond"], a:1, e:"Alternates; next is square."},
+  {t:"Rotation", q:"Rotate ▲ by 270° clockwise.", o:["▲","▼","◀","▶","◆"], a:2, e:"270° clockwise = 90° anticlockwise; ▲ becomes ◀."},
+  {t:"Net", q:"How many faces does a cube have?", o:["4","5","6","7","8"], a:2, e:"A cube has 6 faces."},
+  {t:"Mirror", q:"In a vertical mirror, the word 'bɒd' looks like…", o:["bod","dob","pɒq","qɒp","bɒd"], a:1, e:"Left-right reversed: 'dob' (using normal letters)."},
+  {t:"Positions", q:"If a dot moves two steps right and one up, from (0,0) it reaches…", o:["(2,1)","(1,2)","(2,-1)","(-2,1)","(0,2)"], a:0, e:"x+2, y+1 → (2,1)."},
+  {t:"Sequence", q:"Edges in polygons: triangle(3), square(4), pentagon(5), … next?", o:["hexagon","heptagon","octagon","nonagon","decagon"], a:0, e:"Increasing by 1 → hexagon."},
+  {t:"Clockwise", q:"Turn ◀ 90° clockwise.", o:["▲","▼","▶","◀","◆"], a:2, e:"Left becomes right: ▶."},
+  {t:"Counting", q:"How many small squares are in a 3×3 grid?", o:["6","7","8","9","12"], a:3, e:"There are 9 small unit squares."},
+  {t:"Pattern", q:"Which completes: ◆, ◇, ◆, ◇, ?", o:["◆","◇","○","●","□"], a:0, e:"Filled diamond alternates with outline: ◆."},
+  {t:"Angles", q:"Straight angle equals…", o:["90°","120°","180°","270°","360°"], a:2, e:"A straight angle is 180°."},
+  {t:"Mirror", q:"Horizontal mirror of ▲ is…", o:["▲","▼","◀","▶","◆"], a:1, e:"Flip top-bottom: ▼."},
+  {t:"Rotation", q:"After two 90° clockwise turns, ↖ becomes…", o:["↗","↘","↙","↖","→"], a:2, e:"Two steps CW from ↖ → ↘ → ↙."},
+  {t:"Odd One Out", q:"Pick the odd one.", o:["⬜","⬛","◼","◻","◾"], a:0, e:"⬜ is an outline; others are filled."},
+  {t:"Symmetry", q:"How many axes of symmetry does a regular hexagon have?", o:["2","3","4","6","8"], a:3, e:"Regular n‑gon has n axes → 6."},
+  {t:"Counting", q:"How many vertices does a cube have?", o:["6","8","10","12","16"], a:1, e:"A cube has 8 vertices."},
+  {t:"Series", q:"Find the next number: 1, 1, 2, 3, 5, 8, ?", o:["8","10","11","13","15"], a:3, e:"Fibonacci → 13."},
+  {t:"Net", q:"A cylinder has how many flat faces?", o:["0","1","2","3","4"], a:2, e:"Two circular flat faces."},
+  {t:"Rotation", q:"Rotate ▼ by 180°.", o:["▲","▼","◀","▶","◆"], a:0, e:"Upside‑down of ▼ is ▲."}
+];
+
+const tail = [
+  {t:"Counting", q:"How many diagonals in a square?", o:["1","2","3","4","5"], a:1, e:"Two diagonals."},
+  {t:"Sequence", q:"Which comes next: ◯, ◯◯, ◯◯◯, ?", o:["◯◯","◯◯◯","◯◯◯◯","◯","◯◯◯◯◯"], a:2, e:"Increase by one circle each time."},
+  {t:"Pattern", q:"Which pair follows: AB, BC, CD, ?", o:["DE","AD","DC","CE","BD"], a:0, e:"Shift on the alphabet → DE."},
+  {t:"Angles", q:"Reflex angle is…", o:["< 90°","90°–180°","> 180° and < 360°","= 360°","= 0°"], a:2, e:"Reflex angles are between 180° and 360°."},
+  {t:"Mirror", q:"Vertical mirror of the bracket ‘(’ is…", o:[")","(","[","]","{"], a:0, e:"( becomes ) in a vertical mirror."},
+  {t:"Rotation", q:"Rotate the letter N by 180°. It looks like…", o:["N","Z","S","N (same)","И"], a:3, e:"Capital N is symmetrical in 180° rotation."},
+  {t:"Odd One Out", q:"Choose the odd one.", o:["▼","▲","◀","▶","◆"], a:4, e:"◆ is not a triangle."},
+  {t:"Series", q:"Complete: 5, 10, 15, 20, __", o:["22","24","25","30","35"], a:2, e:"Add 5 each time → 25."},
+  {t:"Counting", q:"How many edges does a triangular prism have?", o:["6","8","9","12","15"], a:2, e:"Triangular prism has 9 edges."}
+];
+
+// Fix for question 11 description/answers
+QUESTIONS[10].o = ["↖","↗","↘","↙","↓"];
+QUESTIONS[10].a = 0;
+QUESTIONS[10].e = "Vertical mirror flips left/right: ↗ becomes ↖.";
+
+const DATA = [...QUESTIONS, ...more, ...tail]; // total 30
+
+// ---- QUIZ ENGINE ----
+let idx = 0;
+let score = 0;
+let chosen = null;
+const answers = []; // for review
+
+const qtext = document.getElementById('qtext');
+const options = document.getElementById('options');
+const qNumber = document.getElementById('qNumber');
+const topicTag = document.getElementById('topicTag');
+const bar = document.getElementById('bar');
+const statusMsg = document.getElementById('statusMsg');
+const explain = document.getElementById('explain');
+const checkBtn = document.getElementById('checkBtn');
+const nextBtn = document.getElementById('nextBtn');
+const resultCard = document.getElementById('result');
+const finalScore = document.getElementById('finalScore');
+const reviewList = document.getElementById('reviewList');
+const markText = document.getElementById('markText');
+
+function renderQuestion() {
+  const total = DATA.length;
+  const q = DATA[idx];
+  qNumber.textContent = `Question ${idx+1} / ${total}`;
+  topicTag.textContent = q.t;
+  qtext.innerHTML = q.q;
+  options.innerHTML = '';
+  chosen = null;
+  checkBtn.disabled = true;
+  nextBtn.disabled = true;
+  explain.classList.add('hidden');
+  statusMsg.textContent = '';
+  bar.style.width = `${(idx)/total*100}%`;
+  // build buttons
+  q.o.forEach((text,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.innerHTML = `<span class="opt-letter">${String.fromCharCode(97+i)})</span><span>${text}</span>`;
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('button.choice').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      chosen = i;
+      checkBtn.disabled = false;
+    });
+    options.appendChild(btn);
+  });
+}
+
+function checkAnswer(){
+  const q = DATA[idx];
+  if(chosen==null) return;
+  const correct = (chosen===q.a);
+  answers.push({i:idx, pick:chosen, correct:q.a});
+  if(correct){
+    statusMsg.textContent = '✓ Correct';
+    statusMsg.className = 'status correct';
+    score++;
+    markText.textContent = `Marks: ${score}`;
+  }else{
+    statusMsg.textContent = '✗ Wrong';
+    statusMsg.className = 'status wrong';
+  }
+  explain.textContent = q.e || '';
+  explain.classList.remove('hidden');
+  checkBtn.disabled = true;
+  nextBtn.disabled = false;
+}
+
+function nextQuestion(){
+  if(idx < DATA.length - 1){
+    idx++;
+    renderQuestion();
+  }else{
+    // finished
+    document.querySelector('.card').classList.add('hidden');
+    resultCard.classList.remove('hidden');
+    finalScore.textContent = `${score}/${DATA.length}`;
+    bar.style.width = `100%`;
+    // review
+    reviewList.innerHTML = '';
+    answers.forEach((a,j)=>{
+      const q = DATA[a.i];
+      const li = document.createElement('li');
+      const isRight = a.pick===a.correct;
+      const pickedTxt = q.o[a.pick] ?? '—';
+      const correctTxt = q.o[a.correct];
+      li.innerHTML = `<div class="${isRight?'correct':'wrong'}"><b>Q${j+1}.</b> ${q.q}<br>
+      <span>Your answer:</span> <b>${String.fromCharCode(65+(a.pick??-1))}</b> – ${pickedTxt}<br>
+      <span>Correct:</span> <b>${String.fromCharCode(65+q.a)}</b> – ${correctTxt}
+      ${q.e?('<br><em>'+q.e+'</em>'):''}
+      </div>`;
+      reviewList.appendChild(li);
+    });
+  }
+}
+
+checkBtn.addEventListener('click', checkAnswer);
+nextBtn.addEventListener('click', nextQuestion);
+
+renderQuestion();
+</script>
+</body>
+</html>
